@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>G.L.I.T.C.H.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #080808;
+      color: #ffffff;
+      font-family: 'Courier Prime', 'Courier New', monospace;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    header {
+      text-align: center;
+      padding: 12px;
+      border-bottom: 2px solid #ff0000;
+      margin-bottom: 16px;
+    }
+
+    header h1 {
+      color: #ff0000;
+      font-size: 1.8rem;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+    }
+
+    header .subtitle {
+      color: #ff0000;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-top: 6px;
+      font-weight: 700;
+    }
+
+    .api-key-box {
+      margin-bottom: 12px;
+    }
+
+    .api-key-box input {
+      width: 100%;
+      background-color: #121212;
+      border: 1px solid #ff0000;
+      color: #ffffff;
+      font-family: 'Courier Prime', 'Courier New', monospace;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      border-radius: 4px;
+      outline: none;
+    }
+
+    #chat-container {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-right: 6px;
+    }
+
+    .message.user {
+      align-self: flex-end;
+      background-color: #ff0000;
+      color: #000000;
+      font-weight: 700;
+      font-family: 'Courier Prime', 'Courier New', monospace;
+      padding: 12px 16px;
+      border-radius: 4px;
+      max-width: 85%;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .message.model {
+      align-self: flex-start;
+      background-color: #000000;
+      border: 2px solid #ff0000;
+      color: #ffffff;
+      font-weight: 400;
+      font-family: 'Courier Prime', 'Courier New', monospace;
+      padding: 12px 16px;
+      border-radius: 4px;
+      max-width: 85%;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    #input-container {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    #user-input {
+      flex: 1;
+      background-color: #121212;
+      border: 1px solid #ff0000;
+      color: #ffffff;
+      font-family: 'Courier Prime', 'Courier New', monospace;
+      padding: 12px;
+      font-size: 1rem;
+      border-radius: 4px;
+      outline: none;
+    }
+
+    #user-input:focus {
+      border-color: #ff3333;
+      box-shadow: 0 0 6px rgba(255, 0, 0, 0.6);
+    }
+
+    button {
+      background-color: #ff0000;
+      color: #000000;
+      border: none;
+      font-family: 'Courier Prime', 'Courier New', monospace;
+      font-weight: bold;
+      padding: 12px 20px;
+      cursor: pointer;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    button:hover {
+      background-color: #cc0000;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>G.L.I.T.C.H.</h1>
+    <p class="subtitle">Gamer Linked Intelligent Tactical Control Host</p>
+  </header>
+
+  <div class="api-key-box">
+    <input type="password" id="api-key" placeholder="Enter Free Gemini API Key..." />
+  </div>
+
+  <div id="chat-container">
+    <div class="message model">G.L.I.T.C.H. fully operational. Active fallback protocol engaged. Ready for input.</div>
+  </div>
+
+  <form id="input-container" onsubmit="event.preventDefault(); sendMessage(); return false;">
+    <input type="text" id="user-input" placeholder="Execute command or ask..." required />
+    <button type="submit">SEND</button>
+  </form>
+
+  <script>
+    const SYSTEM_PROMPT = `
+You are G.L.I.T.C.H. (Gamer Linked Intelligent Tactical Control Host), an all-in-one tactical AI assistant.
+
+PERSONALITY & BEHAVIOR:
+- Direct, analytical, slightly sarcastic, highly tactical.
+- Speak concisely with typewriter precision. Avoid filler and fluff.
+- Function as a complete general-purpose AI: provide news, study help, math/science solutions, coding assistance, and general knowledge.
+
+USER PROFILE & CONTEXT:
+- Primary Device: iQOO Z6 Lite (Android)
+- Steam ID: GamerTag123
+- Gaming Stats: Valorant (Ascendant 1, Jett/Sova), Rocket League (Grand Champion), Apex Legends (Diamond 2, Wraith)
+- Technical Skills: Python, HTML/CSS, JavaScript, React, VS Code, DaVinci Resolve, Git, Photoshop
+
+OPERATIONAL RULES:
+- Identify yourself as G.L.I.T.C.H. when asked.
+- Answer questions on ALL topics, including study materials, general knowledge, and gaming updates (e.g., Blox Fruits, patch notes).
+`;
+
+    const chatContainer = document.getElementById('chat-container');
+    const userInput = document.getElementById('user-input');
+    const apiKeyInput = document.getElementById('api-key');
+
+    let contentsHistory = [];
+
+    if (localStorage.getItem('glitch_api_key')) {
+      apiKeyInput.value = localStorage.getItem('glitch_api_key');
+    }
+
+    apiKeyInput.addEventListener('input', () => {
+      localStorage.setItem('glitch_api_key', apiKeyInput.value.trim());
+    });
+
+    function appendMessage(role, text) {
+      const msgDiv = document.createElement('div');
+      msgDiv.classList.add('message', role);
+      msgDiv.textContent = text;
+      chatContainer.appendChild(msgDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const text = userInput.value.trim();
+      const apiKey = apiKeyInput.value.trim();
+
+      if (!text) return;
+      if (!apiKey) {
+        alert('Please enter your Google Gemini API Key.');
+        return;
+      }
+
+      localStorage.setItem('glitch_api_key', apiKey);
+
+      appendMessage('user', text);
+      contentsHistory.push({ role: 'user', parts: [{ text: text }] });
+      userInput.value = '';
+
+      const loadingDiv = document.createElement('div');
+      loadingDiv.classList.add('message', 'model');
+      loadingDiv.textContent = 'G.L.I.T.C.H. computing...';
+      chatContainer.appendChild(loadingDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      const candidateModels = [
+        'models/gemini-3.6-flash'
+      ];
+
+      let success = false;
+      let lastErrorMessage = '';
+
+      for (const modelPath of candidateModels) {
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/${modelPath}:generateContent?key=${apiKey}`;
+          
+          let response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+              contents: contentsHistory,
+              tools: [{ googleSearch: {} }]
+            })
+          });
+
+          let data = await response.json();
+
+          if (data.error) {
+            lastErrorMessage = data.error.message;
+            response = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+                contents: contentsHistory
+              })
+            });
+            data = await response.json();
+          }
+
+          if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+            if (loadingDiv.parentNode) chatContainer.removeChild(loadingDiv);
+            const reply = data.candidates[0].content.parts[0].text;
+            appendMessage('model', reply);
+            contentsHistory.push({ role: 'model', parts: [{ text: reply }] });
+            success = true;
+            break;
+          } else if (data.error) {
+            lastErrorMessage = data.error.message;
+          }
+        } catch (err) {
+          console.warn(`Attempt failed for ${modelPath}:`, err);
+          lastErrorMessage = err.message;
+        }
+      }
+
+      if (!success) {
+        if (loadingDiv.parentNode) chatContainer.removeChild(loadingDiv);
+        appendMessage('model', 'G.L.I.T.C.H. Error: ' + (lastErrorMessage || 'Check API key or network connection.'));
+      }
+    }
+  </script>
+</body>
+</html>
